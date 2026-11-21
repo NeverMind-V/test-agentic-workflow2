@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="A quick, contributor-friendly view of project status, ownership, activity, and priority.">
+    <title>Project Pulse</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <main class="dashboard">
+      <header class="dashboard-header">
+        <div class="dashboard-heading">
+          <p class="eyebrow">Team overview</p>
+          <h1>Project Pulse</h1>
+        </div>
+        <p class="dashboard-intro">A clear snapshot of what teams are building and where contributors can help.</p>
+      </header>
+
+      <section aria-labelledby="projects-heading">
+        <div class="section-heading">
+          <h2 id="projects-heading">Projects</h2>
+        </div>
+        <p id="empty-state" role="status" aria-live="polite">Loading projects…</p>
+        <div class="project-grid" aria-label="Project cards" hidden></div>
+      </section>
+    </main>
+
+    <script>
+      const emptyState = document.querySelector("#empty-state");
+      const projectGrid = document.querySelector(".project-grid");
+
+      function createField(label, value, className) {
+        const paragraph = document.createElement("p");
+        paragraph.className = className;
+
+        const labelElement = document.createElement("span");
+        labelElement.className = "field-label";
+        labelElement.textContent = `${label}: `;
+
+        const valueElement = document.createElement("strong");
+        valueElement.textContent = value;
+
+        paragraph.append(labelElement, valueElement);
+        return paragraph;
+      }
+
+      function createBadge(label, value, className) {
+        const paragraph = document.createElement("p");
+        paragraph.className = className;
+
+        const labelElement = document.createElement("span");
+        labelElement.className = "field-label";
+        labelElement.textContent = `${label}: `;
+
+        const badge = document.createElement("span");
+        badge.className = className === "project-status" ? "status-badge" : "priority-badge";
+        badge.textContent = value;
+        const normalizedValue = value.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+        badge.setAttribute(
+          className === "project-status" ? "data-status" : "data-priority",
+          normalizedValue
+        );
+
+        if (className === "project-priority") {
+          const valueElement = document.createElement("strong");
+          valueElement.append(badge);
+          paragraph.append(labelElement, valueElement);
+        } else {
+          paragraph.append(labelElement, badge);
+        }
+        return paragraph;
+      }
+
+      function createProjectCard(project) {
+        const article = document.createElement("article");
+        article.className = "project-card";
+
+        const cardHeader = document.createElement("header");
+        cardHeader.className = "project-card-header";
+
+        const heading = document.createElement("h3");
+        heading.className = "project-name";
+        heading.textContent = project.name;
+
+        const summary = document.createElement("p");
+        summary.className = "project-summary";
+        summary.textContent = project.summary || `A contributor-friendly overview of ${project.name}.`;
+
+        cardHeader.append(
+          heading,
+          createBadge("Status", project.status, "project-status")
+        );
+
+        const cardFooter = document.createElement("div");
+        cardFooter.className = "project-card-footer";
+        cardFooter.append(
+          createField("Owner", project.owner, "project-owner"),
+          createField("Recent activity", project.recentActivity, "project-activity"),
+          createBadge("Priority", project.priority, "project-priority")
+        );
+
+        article.append(cardHeader, summary, cardFooter);
+        return article;
+      }
+
+      function isProject(project) {
+        return project !== null
+          && typeof project === "object"
+          && ["name", "owner", "status", "recentActivity", "priority"]
+            .every((field) => typeof project[field] === "string" && project[field].trim() !== "");
+      }
+
+      async function loadProjects() {
+        try {
+          const response = await fetch("project-data.json");
+          if (!response.ok) {
+            throw new Error(`The project data could not be loaded (HTTP ${response.status}).`);
+          }
+
+          const data = await response.json();
+          if (!data || !Array.isArray(data.projects)) {
+            throw new Error("The project data is invalid: expected a projects array.");
+          }
+
+          const projects = data.projects.filter(isProject);
+          if (data.projects.length === 0) {
+            emptyState.textContent = "There are no projects to show yet.";
+            return;
+          }
+          if (projects.length === 0) {
+            throw new Error("No projects could be displayed because the project data is incomplete.");
+          }
+
+          const cards = document.createDocumentFragment();
+          projects.forEach((project) => cards.append(createProjectCard(project)));
+          projectGrid.append(cards);
+          projectGrid.hidden = false;
+
+          if (projects.length !== data.projects.length) {
+            emptyState.textContent = "Some incomplete project records were skipped.";
+            emptyState.setAttribute("role", "status");
+          } else {
+            emptyState.hidden = true;
+          }
+        } catch (error) {
+          emptyState.textContent = error instanceof Error
+            ? `Unable to show projects. ${error.message}`
+            : "Unable to show projects. Please try again later.";
+          emptyState.setAttribute("role", "alert");
+        }
+      }
+
+      loadProjects();
+    </script>
+  </body>
+</html>

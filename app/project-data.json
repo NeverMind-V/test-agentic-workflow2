@@ -1,0 +1,28 @@
+{
+  "projects": [
+    {
+      "name": "Community Portal",
+      "owner": "Mona Patel",
+      "status": "In progress",
+      "recentActivity": "Contributor onboarding guide updated today",
+      "priority": "High",
+      "summary": "Help new contributors find their first task and get set up with the team."
+    },
+    {
+      "name": "Design System",
+      "owner": "Jordan Lee",
+      "status": "Active",
+      "recentActivity": "Button accessibility review completed yesterday",
+      "priority": "Medium",
+      "summary": "Build reusable, accessible interface components for product teams."
+    },
+    {
+      "name": "Data Explorer",
+      "owner": "Sam Rivera",
+      "status": "Planning",
+      "recentActivity": "Kickoff notes and initial milestones shared this week",
+      "priority": "Low",
+      "summary": "Make it easier for users to explore and understand shared datasets."
+    }
+  ]
+}
